@@ -61,15 +61,22 @@ def load_config() -> ConfigParser:
 
     # Validasi: pastikan kredensial email tersedia
     try:
-        config.get("email", "email_user")
-        config.get("email", "email_password")
-        config.get("email", "recipient_email")
+        email_user = config.get("email", "email_user")
+        email_password = config.get("email", "email_password")
+        recipient = config.get("email", "recipient_email")
     except Exception:
         raise RuntimeError(
             "Konfigurasi email tidak lengkap. "
             "Set environment variables EMAIL_USER, EMAIL_PASSWORD, RECIPIENT_EMAIL "
             "atau isi config/config.ini."
         )
+
+    # Log nilai yang aktif (tanpa password) untuk debugging
+    import logging
+    _log = logging.getLogger("NewsScrapper")
+    _log.info(f"[Config] EMAIL_USER      = {email_user}")
+    _log.info(f"[Config] RECIPIENT_EMAIL = {recipient}")
+    _log.info(f"[Config] EMAIL_PASSWORD  = {'✅ set' if email_password else '❌ kosong'}")
 
     return config
 
