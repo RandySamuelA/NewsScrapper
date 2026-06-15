@@ -1,0 +1,31 @@
+# Jangan push konfigurasi yang mengandung password/API key
+config/config.ini
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environment
+venv/
+.venv/
+env/
+__pycache__/
+
+# Logs & output (tidak perlu di-push)
+logs/*.log
+data/output/*.xlsx
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

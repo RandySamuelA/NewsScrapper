@@ -1,0 +1,44 @@
+name: 📰 Daily News Digest
+
+on:
+  # Jadwal otomatis: setiap hari jam 00:00 UTC = 07:00 WIB
+  schedule:
+    - cron: "0 0 * * *"
+
+  # Tombol manual di GitHub UI (untuk testing)
+  workflow_dispatch:
+
+jobs:
+  send-news-digest:
+    name: Scrape & Send News Digest
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: 📦 Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: 📰 Run News Scraper & Send Email
+        env:
+          # Kredensial diambil dari GitHub Secrets (TIDAK tersimpan di kode)
+          EMAIL_USER:       ${{ secrets.EMAIL_USER }}
+          EMAIL_PASSWORD:   ${{ secrets.EMAIL_PASSWORD }}
+          RECIPIENT_EMAIL:  ${{ secrets.RECIPIENT_EMAIL }}
+        run: python src/main.py --run-now
+
+      - name: 📋 Upload logs (jika ada error)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: news-scraper-logs
+          path: logs/
+          retention-days: 7

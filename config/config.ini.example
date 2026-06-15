@@ -1,0 +1,32 @@
+# Salin file ini menjadi config.ini dan isi nilainya
+# JANGAN push config.ini ke Git (sudah ada di .gitignore)
+
+[email]
+smtp_host = smtp.gmail.com
+smtp_port = 587
+email_user = your_email@gmail.com
+email_password = xxxx xxxx xxxx xxxx   # Gmail App Password
+recipient_email = destination@gmail.com
+
+[news]
+# Sumber berita RSS - pisahkan dengan koma
+rss_sources =
+    https://feeds.bbci.co.uk/news/rss.xml,
+    https://feeds.bbci.co.uk/news/technology/rss.xml,
+    https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml,
+    https://techcrunch.com/feed/,
+    https://news.google.com/rss?hl=id&gl=ID&ceid=ID:id
+
+max_articles_per_source = 5
+summary_language = id
+schedule_time = 07:00
+
+[summarizer]
+# extractive = tanpa AI (default, ringan)
+# ollama     = LLM lokal (butuh Ollama terinstall)
+method = extractive
+extractive_sentences = 3
+
+[settings]
+log_file = logs/app.log
+output_dir = data/output
