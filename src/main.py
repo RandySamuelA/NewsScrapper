@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.logger import setup_logger
 from src.news_fetcher import fetch_articles
-from src.summarizer import summarize, ensure_nltk_data
+from src.summarizer import summarize_and_translate, ensure_nltk_data
 from src.email_sender import send_email
 from src.scheduler import start_scheduler
 
@@ -35,13 +35,21 @@ def load_config() -> ConfigParser:
     """
     config = ConfigParser()
 
-    # Coba baca config.ini terlebih dahulu sebagai base
+    # Coba baca config.ini terlebih dahulu (lokal)
+    # Jika tidak ada (GitHub Actions), fallback ke config.defaults.ini
     config_path = os.path.join(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
         "config", "config.ini",
     )
+    defaults_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "config", "config.defaults.ini",
+    )
+
     if os.path.exists(config_path):
         config.read(config_path, encoding="utf-8")
+    elif os.path.exists(defaults_path):
+        config.read(defaults_path, encoding="utf-8")
 
     # Override dengan environment variables jika ada
     # Ini yang dipakai saat jalan di GitHub Actions
@@ -102,16 +110,18 @@ def run_pipeline(config: ConfigParser) -> None:
         logger.warning("Tidak ada artikel yang berhasil diambil. Pipeline dihentikan.")
         return
 
-    # 3. Generate summary untuk tiap artikel
-    logger.info(f"Membuat summary untuk {len(articles)} artikel...")
+    # 3. Generate summary + terjemahan Bahasa Indonesia untuk tiap artikel
+    logger.info(f"Membuat summary & menerjemahkan {len(articles)} artikel ke Bahasa Indonesia...")
     for i, article in enumerate(articles, 1):
-        logger.debug(f"  Summarizing [{i}/{len(articles)}]: {article.title[:50]}...")
-        article.summary = summarize(
+        logger.debug(f"  [{i}/{len(articles)}] {article.title[:55]}...")
+        translated_title, translated_summary = summarize_and_translate(
             title=article.title,
             description=article.description,
             full_text=article.full_text,
             config=config,
         )
+        article.title   = translated_title
+        article.summary = translated_summary
 
     # 4. Kirim email
     success = send_email(articles, config)

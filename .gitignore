@@ -1,7 +1,6 @@
-# config.ini BOLEH di-push karena sudah dibersihkan dari password
-# Password disimpan di GitHub Secrets
-# Tapi kalau kamu uncomment kredensial lokal di config.ini, tambahkan baris ini:
-# config/config.ini
+# config.ini lokal mengandung password — JANGAN push ke GitHub
+# GitHub Actions menggunakan GitHub Secrets, bukan file ini
+config/config.ini
 
 # Python
 __pycache__/
