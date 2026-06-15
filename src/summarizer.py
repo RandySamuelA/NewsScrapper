@@ -19,13 +19,16 @@ logger = logging.getLogger("NewsScrapper")
 
 # ─── Step 1: Extractive Summary ──────────────────────────────────────────────
 
-def _extractive_summary(text: str, num_sentences: int = 4) -> str:
+def _extractive_summary(text: str, num_sentences: int = 3) -> str:
     """
     Pilih N kalimat paling penting dari teks menggunakan algoritma LSA (sumy).
-    Bekerja pada teks bahasa apapun — tidak perlu tahu bahasanya.
+    Input dibatasi agar summary tetap ringkas.
     """
     if not text or len(text.strip()) < 80:
         return text.strip()
+
+    # Batasi input maksimal 1000 karakter agar output tetap pendek
+    text = text[:1000]
 
     try:
         from sumy.parsers.plaintext import PlaintextParser
@@ -41,6 +44,11 @@ def _extractive_summary(text: str, num_sentences: int = 4) -> str:
 
         sentences = summarizer(parser.document, num_sentences)
         result = " ".join(str(s) for s in sentences).strip()
+
+        # Hard cap: potong jika masih terlalu panjang (> 600 karakter)
+        if len(result) > 600:
+            result = _simple_truncate(result, num_sentences)
+
         return result if result else _simple_truncate(text, num_sentences)
 
     except Exception as e:
@@ -48,10 +56,17 @@ def _extractive_summary(text: str, num_sentences: int = 4) -> str:
         return _simple_truncate(text, num_sentences)
 
 
-def _simple_truncate(text: str, num_sentences: int = 4) -> str:
-    """Fallback: ambil N kalimat pertama."""
+def _simple_truncate(text: str, num_sentences: int = 3) -> str:
+    """Fallback: ambil N kalimat pertama, hard cap 600 karakter."""
     sentences = re.split(r'(?<=[.!?])\s+', text.strip())
-    return " ".join(sentences[:num_sentences]) if sentences else text[:400]
+    result = " ".join(sentences[:num_sentences])
+    # Potong di titik terakhir jika masih panjang
+    if len(result) > 600:
+        result = result[:600]
+        last_period = result.rfind('.')
+        if last_period > 200:
+            result = result[:last_period + 1]
+    return result
 
 
 # ─── Step 2: Translate ke Bahasa Indonesia ───────────────────────────────────
@@ -94,24 +109,29 @@ def summarize_and_translate(
     config: ConfigParser,
 ) -> tuple[str, str]:
     """
-    Pipeline lengkap: summary + terjemahan Bahasa Indonesia.
+    Pipeline: summary ringkas (3 kalimat) + terjemahan ke Bahasa Indonesia.
 
     Returns:
-        (translated_title, translated_summary) — keduanya dalam Bahasa Indonesia
+        (translated_title, translated_summary)
     """
-    num_sentences = config.getint("summarizer", "extractive_sentences", fallback=4)
+    num_sentences = config.getint("summarizer", "extractive_sentences", fallback=3)
 
-    # Pilih sumber teks terbaik untuk disummary
-    source_text = full_text if len(full_text) > len(description) else description
-    if not source_text:
-        source_text = description or title
+    # Prioritas: deskripsi RSS dulu (sudah ringkas), baru full_text jika deskripsi kosong
+    # Ini mencegah summary jadi terlalu panjang karena full_text bisa ribuan karakter
+    if description and len(description) >= 80:
+        source_text = description
+    elif full_text:
+        # Ambil hanya 800 karakter pertama dari full_text
+        source_text = full_text[:800]
+    else:
+        source_text = title
 
-    # Step 1: Extractive summary (ambil kalimat terpenting)
+    # Step 1: Extractive summary
     raw_summary = _extractive_summary(source_text, num_sentences)
     if not raw_summary:
-        raw_summary = source_text[:500]
+        raw_summary = source_text[:400]
 
-    # Step 2: Terjemahkan summary & judul ke Bahasa Indonesia
+    # Step 2: Translate judul + summary ke Bahasa Indonesia
     translated_title   = _translate_to_indonesian(title)
     translated_summary = _translate_to_indonesian(raw_summary)
 
