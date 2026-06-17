@@ -1,10 +1,11 @@
 name: 📰 Daily News Digest
 
 on:
-  # Jadwal: setiap hari jam 00:00 UTC = 07:00 WIB
-  # Catatan: GitHub Actions free tier bisa delay 5-30 menit dari jadwal
+  # Jadwal: setiap hari jam 23:00 UTC (hari sebelumnya) = 06:00 WIB
+  # Dikurangi 1 jam dari target (07:00 WIB) untuk kompensasi delay GitHub Actions
+  # yang biasanya 30-60 menit pada free tier
   schedule:
-    - cron: "0 0 * * *"
+    - cron: "0 23 * * *"
 
   # Tombol manual di GitHub UI (untuk testing)
   workflow_dispatch:
