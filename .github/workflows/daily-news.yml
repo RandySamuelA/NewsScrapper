@@ -1,7 +1,8 @@
 name: 📰 Daily News Digest
 
 on:
-  # Jadwal otomatis: setiap hari jam 00:00 UTC = 07:00 WIB
+  # Jadwal: setiap hari jam 00:00 UTC = 07:00 WIB
+  # Catatan: GitHub Actions free tier bisa delay 5-30 menit dari jadwal
   schedule:
     - cron: "0 0 * * *"
 
@@ -18,6 +19,11 @@ jobs:
       - name: 📥 Checkout repository
         uses: actions/checkout@v4
 
+      - name: 🕐 Show current time (UTC & WIB)
+        run: |
+          echo "UTC  : $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "WIB  : $(TZ='Asia/Jakarta' date '+%Y-%m-%d %H:%M:%S WIB')"
+
       - name: 🐍 Setup Python 3.12
         uses: actions/setup-python@v5
         with:
@@ -29,7 +35,6 @@ jobs:
 
       - name: 📰 Run News Scraper & Send Email
         env:
-          # Kredensial diambil dari GitHub Secrets (TIDAK tersimpan di kode)
           EMAIL_USER:       ${{ secrets.EMAIL_USER }}
           EMAIL_PASSWORD:   ${{ secrets.EMAIL_PASSWORD }}
           RECIPIENT_EMAIL:  ${{ secrets.RECIPIENT_EMAIL }}
